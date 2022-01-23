@@ -50,11 +50,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      # VersionとPDF名を環境変数に追加
+      - name: Set environment variables
+        run: |
+          echo "VERSION=$(echo ${{ github.ref }} | sed -e "s#refs/tags/##g")" >> $GITHUB_ENV
+          echo "PDF_NAME=${{ env.ARTIFACT_NAME }}-${VERSION}" >> $GITHUB_ENV
+
       # ビルドジョブでアップロードしたPDFをここでダウンロード
       - name: Download artifact
         uses: actions/download-artifact@v2
         with:
           name: pdf
+
+      # PDF名にバージョンを追加
+      - name: Rename PDF
+        run: mv ./${{ env.ARTIFACT_NAME }} ./${PDF_NAME}.pdf
 
       # Releaseを作成する
       # https://github.com/YOURNAME/YOURREPO/releases に 'Release タグ名' で作成
@@ -62,5 +72,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION=$(echo ${{ github.ref }} | sed -e "s#refs/tags/##g")
-          gh release create ${VERSION} -n "Release ${VERSION}" ./${{ env.ARTIFACT_NAME }}
+          gh release create ${VERSION} -n "Release ${VERSION}" ./${PDF_NAME}.pdf
